@@ -1,0 +1,82 @@
+{{> head}}
+<style>
+  .success-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+  .check-circle {
+    width: 100px;
+    height: 100px;
+    border: 3px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .check-circle svg {
+    width: 50px;
+    height: 50px;
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 3;
+    stroke-linecap: square;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: drawCheck 0.6s 0.4s ease forwards;
+  }
+  @keyframes scaleIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
+  }
+  .success-title {
+    font-size: 1.8rem;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+    animation: fadeIn 0.5s 0.6s ease both;
+  }
+  .success-subtitle {
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+    font-size: 1rem;
+    animation: fadeIn 0.5s 0.8s ease both;
+  }
+  .redirect-bar {
+    width: 200px;
+    height: 3px;
+    background: var(--border);
+    overflow: hidden;
+    animation: fadeIn 0.5s 1s ease both;
+  }
+  .redirect-bar-fill {
+    height: 100%;
+    background: var(--cyan);
+    animation: fillBar 3s 1s linear forwards;
+  }
+  @keyframes fillBar {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+</style>
+
+<div class="success-container">
+  <div class="check-circle">
+    <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
+  </div>
+  <h1 class="success-title">Payment Completed</h1>
+  <p class="success-subtitle">Your order has been placed successfully.</p>
+  <div class="redirect-bar"><div class="redirect-bar-fill"></div></div>
+  <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 0.8rem; animation: fadeIn 0.5s 1s ease both;">Redirecting to home...</p>
+</div>
+
+<script>
+  setTimeout(function() { window.location.href = '/'; }, 4000);
+</script>
+{{> foot}}

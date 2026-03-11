@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rivest-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: microservice_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  product-service:
+    build:
+      context: .
+      dockerfile: docker/product-service.Dockerfile
+    container_name: rivest-product-service
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/microservice_db
+      GRPC_URL: 0.0.0.0:50051
+    ports:
+      - '3001:3001'
+      - '50051:50051'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: .
+      dockerfile: docker/order-service.Dockerfile
+    container_name: rivest-order-service
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/microservice_db
+      PRODUCT_GRPC_URL: product-service:50051
+      GRPC_URL: 0.0.0.0:50052
+    ports:
+      - '3002:3002'
+      - '50052:50052'
+    depends_on:
+      - postgres
+      - product-service
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+    container_name: rivest-gateway
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/microservice_db
+      PRODUCT_GRPC_URL: product-service:50051
+      ORDER_GRPC_URL: order-service:50052
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      PORT: 3000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+      - product-service
+      - order-service
+
+volumes:
+  postgres_data:

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rivest</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface-hover: #1a1a1a;
+      --border: #1e1e1e;
+      --cyan: #00e5ff;
+      --cyan-dim: rgba(0,229,255,0.15);
+      --cyan-glow: 0 0 20px rgba(0,229,255,0.15);
+      --text: #e0e0e0;
+      --text-dim: #888;
+      --white: #ffffff;
+      --red: #ff4444;
+      --green: #00e676;
+    }
+
+    html { font-size: 15px; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    a { color: var(--cyan); text-decoration: none; transition: opacity 0.2s; }
+    a:hover { opacity: 0.8; }
+
+    .navbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.4rem 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+      opacity: 1;
+    }
+    .nav-cart { position: relative; cursor: pointer; }
+    .nav-cart svg { width: 22px; height: 22px; fill: var(--text); transition: fill 0.3s; }
+    .nav-cart:hover svg { fill: var(--cyan); }
+    .cart-badge {
+      position: absolute; top: -6px; right: -8px;
+      background: var(--cyan); color: #000;
+      font-size: 0.65rem; font-weight: 700;
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-user { position: relative; }
+    .nav-user-btn {
+      background: none; border: 1px solid var(--border); color: var(--text);
+      padding: 0.35rem 0.8rem; cursor: pointer; font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+    .nav-user-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+    .nav-dropdown {
+      display: none; position: absolute; top: 100%; right: 0;
+      margin-top: 0.4rem; background: var(--surface);
+      border: 1px solid var(--border); min-width: 180px; z-index: 200;
+    }
+    .nav-dropdown.open { display: block; }
+    .nav-dropdown a, .nav-dropdown button {
+      display: block; width: 100%; padding: 0.6rem 1rem; text-align: left;
+      color: var(--text); background: none; border: none;
+      border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav-dropdown a:last-child, .nav-dropdown button:last-child { border-bottom: none; }
+    .nav-dropdown a:hover, .nav-dropdown button:hover { background: var(--surface-hover); color: var(--cyan); }
+
+    main {
+      flex: 1; padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .footer {
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 1.2rem 2rem; text-align: center; color: var(--text-dim); font-size: 0.8rem;
+    }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border); padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .card:hover { border-color: rgba(0,229,255,0.3); box-shadow: var(--cyan-glow); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.6rem 1.4rem; font-size: 0.9rem; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+    }
+    .btn-primary { background: var(--cyan); color: #000; }
+    .btn-primary:hover { box-shadow: 0 0 25px rgba(0,229,255,0.4); opacity: 1; color: #000; }
+    .btn-outline { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); }
+    .btn-outline:hover { background: var(--cyan-dim); opacity: 1; color: var(--cyan); }
+    .btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+    .btn-danger:hover { background: rgba(255,68,68,0.1); opacity: 1; color: var(--red); }
+    .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    input, textarea, select {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 0.6rem 0.8rem; font-size: 0.9rem; width: 100%;
+      font-family: inherit; transition: border-color 0.3s ease;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none; border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan-dim);
+    }
+    select option { background: var(--surface); color: var(--text); }
+    label { display: block; margin-bottom: 0.3rem; font-size: 0.85rem; color: var(--text-dim); font-weight: 500; }
+    .form-group { margin-bottom: 1rem; }
+
+    .toast-container { position: fixed; top: 70px; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { background: var(--surface); border: 1px solid var(--border); padding: 0.8rem 1.2rem; font-size: 0.85rem; animation: slideIn 0.3s ease; max-width: 320px; }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--cyan); animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay { display: flex; align-items: center; justify-content: center; padding: 4rem; gap: 0.8rem; color: var(--text-dim); }
+
+    .grid { display: grid; gap: 1.5rem; }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 900px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } .navbar { padding: 0 1rem; } main { padding: 1rem; } }
+
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-dim); }
+    .empty-state h2 { color: var(--text); margin-bottom: 0.5rem; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    th { color: var(--text-dim); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    tr:hover td { background: var(--surface-hover); }
+
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .page-header h1 { font-size: 1.6rem; color: var(--white); font-weight: 700; }
+
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-pending { background: rgba(255,193,7,0.15); color: #ffc107; }
+    .badge-confirmed { background: rgba(0,230,118,0.15); color: var(--green); }
+    .badge-cancelled { background: rgba(255,68,68,0.15); color: var(--red); }
+
+    .search-bar { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+    .search-bar input { max-width: 320px; }
+    .search-bar select { max-width: 200px; }
+  </style>
+  <script>
+    function toggleDropdown() {
+      var dd = document.getElementById('user-dropdown');
+      if (dd) dd.classList.toggle('open');
+    }
+    function logout() {
+      document.cookie = 'access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+      window.location.href = '/login';
+    }
+    function showToast(msg, type) {
+      function render() {
+        var c = document.getElementById('toast-container');
+        if (!c) return;
+        var t = document.createElement('div');
+        t.className = 'toast ' + (type || 'success');
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(function() { t.remove(); }, 3500);
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', render);
+      } else {
+        render();
+      }
+    }
+    async function apiFetch(url, opts) {
+      opts = opts || {};
+      opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      opts.credentials = 'same-origin';
+      var res = await fetch(url, opts);
+      if (res.status === 401) {
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return null;
+      }
+      var data = null;
+      try { data = await res.json(); } catch(e) { /* empty */ }
+      if (!res.ok) {
+        var msg = (data && data.message) || 'Something went wrong';
+        showToast(msg, 'error');
+        throw new Error(msg);
+      }
+      return data;
+    }
+  </script>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="nav-brand">Rivest</a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      {{#if user}}
+        <li><a href="/products/create">Create Product</a></li>
+        <li>
+          <a href="/cart" class="nav-cart">
+            <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM7.16 14.26l.04-.12.94-1.7h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0020.04 4H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7.42a.25.25 0 01-.26-.24z"/></svg>
+            <span class="cart-badge" id="cart-count" style="display:none;">0</span>
+          </a>
+        </li>
+        <li class="nav-user">
+          <button class="nav-user-btn" onclick="toggleDropdown()">{{user.email}}</button>
+          <div class="nav-dropdown" id="user-dropdown">
+            <a href="/orders/history">Purchase History</a>
+            <button onclick="logout()">Logout</button>
+          </div>
+        </li>
+      {{else}}
+        <li><a href="/login">Login</a></li>
+        <li><a href="/signup">Sign Up</a></li>
+      {{/if}}
+    </ul>
+  </nav>
+  <main>

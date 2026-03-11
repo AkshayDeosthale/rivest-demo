@@ -1,0 +1,132 @@
+{{> head}}
+<div class="page-header">
+  <h1>Shopping Cart</h1>
+</div>
+
+<div id="cart-loading" class="loading-overlay">
+  <div class="spinner"></div>
+  <span>Loading cart...</span>
+</div>
+
+<div id="cart-empty" class="empty-state" style="display: none;">
+  <h2>Your cart is empty</h2>
+  <p style="margin-bottom: 1rem;">Browse products and add items to your cart.</p>
+  <a href="/" class="btn btn-outline btn-sm">Browse Products</a>
+</div>
+
+<div id="cart-error" class="empty-state" style="display: none;">
+  <h2>Failed to load cart</h2>
+  <p style="margin-bottom: 1rem;">Something went wrong.</p>
+  <button class="btn btn-outline btn-sm" onclick="loadCart()">Retry</button>
+</div>
+
+<div id="cart-content" style="display: none;">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>Subtotal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="cart-body"></tbody>
+    </table>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+    <div>
+      <span style="color: var(--text-dim); font-size: 0.9rem;">Total:</span>
+      <span id="cart-total" style="font-size: 1.5rem; font-weight: 700; color: var(--cyan); margin-left: 0.5rem;"></span>
+    </div>
+    <div style="display: flex; gap: 0.8rem;">
+      <button class="btn btn-danger btn-sm" onclick="clearCart()">Clear Cart</button>
+      <a href="/checkout?fromCart=1" class="btn btn-primary" id="checkout-btn">Proceed to Checkout</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var cartItems = [];
+  var productCache = {};
+
+  window.loadCart = function() {
+    document.getElementById('cart-loading').style.display = 'flex';
+    document.getElementById('cart-content').style.display = 'none';
+    document.getElementById('cart-empty').style.display = 'none';
+    document.getElementById('cart-error').style.display = 'none';
+
+    apiFetch('/api/cart')
+      .then(function(items) {
+        cartItems = items || [];
+        if (cartItems.length === 0) {
+          document.getElementById('cart-loading').style.display = 'none';
+          document.getElementById('cart-empty').style.display = 'block';
+          return;
+        }
+        var productIds = cartItems.map(function(i) { return i.productId; });
+        var unique = productIds.filter(function(v, i, a) { return a.indexOf(v) === i; });
+        return Promise.all(unique.map(function(pid) {
+          return fetch('/api/products/' + pid).then(function(r) { return r.json(); }).then(function(p) { productCache[pid] = p; });
+        }));
+      })
+      .then(function() {
+        if (cartItems.length === 0) return;
+        renderCart();
+      })
+      .catch(function() {
+        document.getElementById('cart-loading').style.display = 'none';
+        document.getElementById('cart-error').style.display = 'block';
+      });
+  };
+
+  function renderCart() {
+    document.getElementById('cart-loading').style.display = 'none';
+    document.getElementById('cart-content').style.display = 'block';
+    var body = document.getElementById('cart-body');
+    var total = 0;
+    body.innerHTML = cartItems.map(function(item) {
+      var p = productCache[item.productId] || {};
+      var price = Number(p.price) || 0;
+      var sub = price * item.quantity;
+      total += sub;
+      return '<tr>'
+        + '<td><a href="/products/' + item.productId + '" style="color: var(--white);">' + escapeHtml(p.name || 'Unknown') + '</a></td>'
+        + '<td>$' + price.toFixed(2) + '</td>'
+        + '<td>' + item.quantity + '</td>'
+        + '<td style="color: var(--cyan); font-weight: 600;">$' + sub.toFixed(2) + '</td>'
+        + '<td><button class="btn btn-danger btn-sm" onclick="removeItem(\'' + item.id + '\')">Remove</button></td>'
+        + '</tr>';
+    }).join('');
+    document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
+  }
+
+  window.removeItem = function(id) {
+    apiFetch('/api/cart/' + id, { method: 'DELETE' })
+      .then(function() {
+        showToast('Item removed', 'success');
+        loadCart();
+      });
+  };
+
+  window.clearCart = function() {
+    apiFetch('/api/cart', { method: 'DELETE' })
+      .then(function() {
+        showToast('Cart cleared', 'success');
+        loadCart();
+      });
+  };
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  loadCart();
+})();
+</script>
+{{> foot}}

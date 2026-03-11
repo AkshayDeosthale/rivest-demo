@@ -1,0 +1,8 @@
+{{> head}}
+<div class="empty-state" style="padding: 6rem 2rem;">
+  <div style="font-size: 4rem; color: var(--red); margin-bottom: 1rem;">!</div>
+  <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Something went wrong</h2>
+  <p style="margin-bottom: 1.5rem;">{{#if message}}{{message}}{{else}}An unexpected error occurred.{{/if}}</p>
+  <a href="/" class="btn btn-outline">Go Home</a>
+</div>
+{{> foot}}

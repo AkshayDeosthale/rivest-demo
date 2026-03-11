@@ -1,0 +1,76 @@
+{{> head}}
+<div style="max-width: 480px; margin: 3rem auto;">
+  <div class="card">
+    <h1 style="font-size: 1.5rem; color: var(--white); margin-bottom: 0.3rem;">Create account</h1>
+    <p style="color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.9rem;">Join Rivest to start shopping</p>
+
+    <div id="alert-error" style="display:none; padding: 0.6rem 0.8rem; border: 1px solid var(--red); color: var(--red); font-size: 0.85rem; margin-bottom: 1rem;">
+      Registration failed. Email may already be in use.
+    </div>
+
+    <form action="/auth/signup-form" method="POST" id="signup-form">
+      {{#each formConfig.data}}
+        <div class="form-group">
+          <label for="{{name}}">{{label}}{{#if required}} <span style="color:var(--red);">*</span>{{/if}}</label>
+          {{#if (eq fieldType "TEXT")}}
+            <input
+              type="{{#if (eq name "password")}}password{{else if (eq name "email")}}email{{else}}text{{/if}}"
+              id="{{name}}"
+              name="{{name}}"
+              value="{{defaultValue}}"
+              {{#if minLength}}minlength="{{minLength}}"{{/if}}
+              {{#if maxLength}}maxlength="{{maxLength}}"{{/if}}
+              {{#if required}}required{{/if}}
+              {{#if (eq name "email")}}placeholder="you@example.com"{{/if}}
+              {{#if (eq name "password")}}placeholder="Min 6 characters"{{/if}}
+            >
+          {{/if}}
+          {{#if (eq fieldType "LIST")}}
+            <select id="{{name}}" name="{{name}}" {{#if required}}required{{/if}}>
+              {{#each listOfValues1}}
+                <option value="{{this}}" {{#if (eq ../defaultValue (toString @index))}}selected{{/if}}>{{this}}</option>
+              {{/each}}
+            </select>
+          {{/if}}
+          {{#if (eq fieldType "RADIO")}}
+            <div style="display: flex; gap: 1.5rem; margin-top: 0.3rem;">
+              {{#each listOfValues1}}
+                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text); font-size: 0.9rem;">
+                  <input
+                    type="radio"
+                    name="{{../name}}"
+                    value="{{@index}}"
+                    {{#if (eq ../defaultValue (toString @index))}}checked{{/if}}
+                    {{#if ../required}}required{{/if}}
+                    style="width: auto; accent-color: var(--cyan);"
+                  >
+                  {{this}}
+                </label>
+              {{/each}}
+            </div>
+          {{/if}}
+        </div>
+      {{/each}}
+      <button type="submit" class="btn btn-primary" style="width: 100%;" id="signup-btn">
+        Create Account
+      </button>
+    </form>
+    <p style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-dim);">
+      Already have an account? <a href="/login">Sign in</a>
+    </p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('error') === '1') document.getElementById('alert-error').style.display = 'block';
+
+  document.getElementById('signup-form').addEventListener('submit', function() {
+    var btn = document.getElementById('signup-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Creating...';
+  });
+})();
+</script>
+{{> foot}}

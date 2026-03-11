@@ -1,0 +1,105 @@
+{{> head}}
+<div class="page-header">
+  <h1>Products</h1>
+  {{#if user}}
+    <a href="/products/create" class="btn btn-primary btn-sm">+ New Product</a>
+  {{/if}}
+</div>
+
+<div class="search-bar" style="margin-bottom: 1.5rem;">
+  <input type="text" id="search-input" placeholder="Search products..." style="flex: 1; max-width: 360px;">
+  <select id="sort-select">
+    <option value="">Sort by</option>
+    <option value="price-asc">Price: Low to High</option>
+    <option value="price-desc">Price: High to Low</option>
+  </select>
+</div>
+
+<div id="products-loading" class="loading-overlay">
+  <div class="spinner"></div>
+  <span>Loading products...</span>
+</div>
+
+<div id="products-error" class="empty-state" style="display: none;">
+  <h2>Failed to load products</h2>
+  <p style="margin-bottom: 1rem;">Something went wrong. Please try again.</p>
+  <button class="btn btn-outline btn-sm" onclick="loadProducts()">Retry</button>
+</div>
+
+<div id="products-empty" class="empty-state" style="display: none;">
+  <h2>No products found</h2>
+  <p>Try a different search term or create a new product.</p>
+</div>
+
+<div id="products-grid" class="grid grid-3" style="display: none;"></div>
+
+<script>
+(function() {
+  var searchInput = document.getElementById('search-input');
+  var sortSelect = document.getElementById('sort-select');
+  var grid = document.getElementById('products-grid');
+  var loading = document.getElementById('products-loading');
+  var errorEl = document.getElementById('products-error');
+  var emptyEl = document.getElementById('products-empty');
+  var debounceTimer;
+
+  function loadProducts() {
+    var search = searchInput.value.trim();
+    var sort = sortSelect.value;
+    var url = '/api/products?limit=50';
+    if (search) url += '&search=' + encodeURIComponent(search);
+    if (sort === 'price-asc') { url += '&sortBy=price&sortOrder=asc'; }
+    if (sort === 'price-desc') { url += '&sortBy=price&sortOrder=desc'; }
+
+    loading.style.display = 'flex';
+    grid.style.display = 'none';
+    errorEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        loading.style.display = 'none';
+        var products = data.products || [];
+        if (products.length === 0) {
+          emptyEl.style.display = 'block';
+          return;
+        }
+        grid.style.display = 'grid';
+        grid.innerHTML = products.map(function(p) {
+          return '<div class="card" style="cursor:pointer;" onclick="window.location.href=\'/products/' + p.id + '\'">'
+            + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.8rem;">'
+            + '<h3 style="font-size:1rem;color:var(--white);margin:0;">' + escapeHtml(p.name) + '</h3>'
+            + (p.category ? '<span style="font-size:0.7rem;padding:0.15rem 0.5rem;background:var(--cyan-dim);color:var(--cyan);">' + escapeHtml(p.category) + '</span>' : '')
+            + '</div>'
+            + '<p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:0.8rem;min-height:2.5rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + escapeHtml(p.description || 'No description') + '</p>'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+            + '<span style="font-size:1.2rem;font-weight:700;color:var(--cyan);">$' + Number(p.price).toFixed(2) + '</span>'
+            + '<span style="font-size:0.8rem;color:' + (p.stock > 0 ? 'var(--green)' : 'var(--red)') + ';">' + (p.stock > 0 ? 'In stock (' + p.stock + ')' : 'Out of stock') + '</span>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+      })
+      .catch(function() {
+        loading.style.display = 'none';
+        errorEl.style.display = 'block';
+      });
+  }
+  window.loadProducts = loadProducts;
+
+  searchInput.addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadProducts, 350);
+  });
+  sortSelect.addEventListener('change', loadProducts);
+
+  loadProducts();
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+})();
+</script>
+{{> foot}}

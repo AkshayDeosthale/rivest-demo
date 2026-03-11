@@ -1,0 +1,46 @@
+{{> head}}
+<div style="max-width: 420px; margin: 4rem auto;">
+  <div class="card">
+    <h1 style="font-size: 1.5rem; color: var(--white); margin-bottom: 0.3rem;">Welcome back</h1>
+    <p style="color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.9rem;">Sign in to your account</p>
+
+    <div id="alert-success" style="display:none; padding: 0.6rem 0.8rem; border: 1px solid var(--green); color: var(--green); font-size: 0.85rem; margin-bottom: 1rem;">
+      Account created successfully. Please sign in.
+    </div>
+    <div id="alert-error" style="display:none; padding: 0.6rem 0.8rem; border: 1px solid var(--red); color: var(--red); font-size: 0.85rem; margin-bottom: 1rem;">
+      Invalid email or password. Please try again.
+    </div>
+
+    <form action="/auth/login-form" method="POST" id="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required minlength="6" placeholder="Min 6 characters">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;" id="login-btn">
+        Sign In
+      </button>
+    </form>
+    <p style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-dim);">
+      No account? <a href="/signup">Create one</a>
+    </p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('registered') === '1') document.getElementById('alert-success').style.display = 'block';
+  if (params.get('error') === '1') document.getElementById('alert-error').style.display = 'block';
+
+  document.getElementById('login-form').addEventListener('submit', function() {
+    var btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Signing in...';
+  });
+})();
+</script>
+{{> foot}}

@@ -1,0 +1,29 @@
+  </main>
+  <footer class="footer">
+    Rivest Demo &mdash; NestJS Microservice System
+  </footer>
+  <div class="toast-container" id="toast-container"></div>
+  <script>
+    document.addEventListener('click', function(e) {
+      var dd = document.getElementById('user-dropdown');
+      if (dd && !e.target.closest('.nav-user')) dd.classList.remove('open');
+    });
+  </script>
+  {{#if user}}
+  <script>
+    (function loadCartCount() {
+      fetch('/api/cart/count', { credentials: 'same-origin' })
+        .then(function(r) { return r.json(); })
+        .then(function(count) {
+          var badge = document.getElementById('cart-count');
+          if (badge && count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'flex';
+          }
+        })
+        .catch(function() {});
+    })();
+  </script>
+  {{/if}}
+</body>
+</html>

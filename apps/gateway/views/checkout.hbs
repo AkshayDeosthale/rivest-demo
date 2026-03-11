@@ -1,0 +1,164 @@
+{{> head}}
+<div style="max-width: 700px; margin: 0 auto;">
+  <a href="javascript:history.back()" style="font-size: 0.85rem; color: var(--text-dim); display: inline-block; margin-bottom: 1.5rem;">&larr; Back</a>
+  <h1 style="font-size: 1.5rem; color: var(--white); margin-bottom: 1.5rem;">Checkout</h1>
+
+  <div id="checkout-loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <span>Preparing checkout...</span>
+  </div>
+
+  <div id="checkout-content" style="display: none;">
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="color: var(--white); margin-bottom: 1rem; font-size: 1rem;">Order Summary</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="invoice-body"></tbody>
+        </table>
+      </div>
+      <div style="text-align: right; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+        <span style="color: var(--text-dim); font-size: 0.9rem;">Total:</span>
+        <span id="invoice-total" style="font-size: 1.4rem; font-weight: 700; color: var(--cyan); margin-left: 0.5rem;"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3 style="color: var(--white); margin-bottom: 1rem; font-size: 1rem;">Shipping Details</h3>
+      <div class="form-group">
+        <label for="address">Address <span style="color: var(--red);">*</span></label>
+        <textarea id="address" rows="3" required placeholder="Enter your full shipping address" style="resize: vertical;"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number <span style="color: var(--red);">*</span></label>
+        <input type="tel" id="phone" required placeholder="e.g. +1 234 567 8900">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width: 100%; padding: 0.8rem;" id="pay-btn" onclick="processPayment()">
+      Proceed to Pay
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var fromCart = params.get('fromCart') === '1';
+  var singleProductId = params.get('productId');
+  var singleQty = parseInt(params.get('qty')) || 1;
+  var checkoutItems = [];
+
+  function loadCheckout() {
+    if (fromCart) {
+      apiFetch('/api/cart')
+        .then(function(items) {
+          if (!items || items.length === 0) {
+            window.location.href = '/cart';
+            return;
+          }
+          var pids = items.map(function(i) { return i.productId; }).filter(function(v,i,a) { return a.indexOf(v) === i; });
+          return Promise.all(pids.map(function(pid) {
+            return fetch('/api/products/' + pid).then(function(r) { return r.json(); });
+          })).then(function(products) {
+            var pMap = {};
+            products.forEach(function(p) { pMap[p.id] = p; });
+            checkoutItems = items.map(function(item) {
+              var pr = pMap[item.productId] || {};
+              return { productId: item.productId, name: pr.name || 'Unknown', price: Number(pr.price) || 0, quantity: item.quantity, cartId: item.id };
+            });
+            renderInvoice();
+          });
+        })
+        .catch(function() {
+          document.getElementById('checkout-loading').innerHTML = '<h2 style="color:var(--red)">Failed to load checkout</h2>';
+        });
+    } else if (singleProductId) {
+      fetch('/api/products/' + singleProductId)
+        .then(function(r) { return r.json(); })
+        .then(function(p) {
+          checkoutItems = [{ productId: p.id, name: p.name, price: Number(p.price), quantity: singleQty }];
+          renderInvoice();
+        })
+        .catch(function() {
+          document.getElementById('checkout-loading').innerHTML = '<h2 style="color:var(--red)">Product not found</h2>';
+        });
+    } else {
+      window.location.href = '/';
+    }
+  }
+
+  function renderInvoice() {
+    document.getElementById('checkout-loading').style.display = 'none';
+    document.getElementById('checkout-content').style.display = 'block';
+    var body = document.getElementById('invoice-body');
+    var total = 0;
+    body.innerHTML = checkoutItems.map(function(item) {
+      var sub = item.price * item.quantity;
+      total += sub;
+      return '<tr>'
+        + '<td style="color: var(--white);">' + escapeHtml(item.name) + '</td>'
+        + '<td>$' + item.price.toFixed(2) + '</td>'
+        + '<td>' + item.quantity + '</td>'
+        + '<td style="color: var(--cyan); font-weight: 600;">$' + sub.toFixed(2) + '</td>'
+        + '</tr>';
+    }).join('');
+    document.getElementById('invoice-total').textContent = '$' + total.toFixed(2);
+  }
+
+  window.processPayment = function() {
+    var address = document.getElementById('address').value.trim();
+    var phone = document.getElementById('phone').value.trim();
+    if (!address || !phone) {
+      showToast('Please fill in address and phone number', 'error');
+      return;
+    }
+    var btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;"></span> Processing payment...';
+
+    var promises = checkoutItems.map(function(item) {
+      return apiFetch('/api/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          productId: item.productId,
+          quantity: item.quantity,
+          address: address,
+          phone: phone
+        })
+      });
+    });
+
+    Promise.all(promises)
+      .then(function() {
+        if (fromCart) {
+          return apiFetch('/api/cart', { method: 'DELETE' });
+        }
+      })
+      .then(function() {
+        window.location.href = '/payment-success';
+      })
+      .catch(function(err) {
+        btn.disabled = false;
+        btn.textContent = 'Proceed to Pay';
+        showToast(err.message || 'Payment failed', 'error');
+      });
+  };
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  loadCheckout();
+})();
+</script>
+{{> foot}}

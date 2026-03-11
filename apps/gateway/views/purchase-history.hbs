@@ -1,0 +1,103 @@
+{{> head}}
+<div class="page-header">
+  <h1>Purchase History</h1>
+</div>
+
+<div id="history-loading" class="loading-overlay">
+  <div class="spinner"></div>
+  <span>Loading orders...</span>
+</div>
+
+<div id="history-empty" class="empty-state" style="display: none;">
+  <h2>No orders yet</h2>
+  <p style="margin-bottom: 1rem;">You haven't placed any orders yet.</p>
+  <a href="/" class="btn btn-outline btn-sm">Browse Products</a>
+</div>
+
+<div id="history-error" class="empty-state" style="display: none;">
+  <h2>Failed to load orders</h2>
+  <p style="margin-bottom: 1rem;">Something went wrong.</p>
+  <button class="btn btn-outline btn-sm" onclick="loadHistory()">Retry</button>
+</div>
+
+<div id="history-content" style="display: none;">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="history-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function() {
+  var productCache = {};
+
+  window.loadHistory = function() {
+    document.getElementById('history-loading').style.display = 'flex';
+    document.getElementById('history-content').style.display = 'none';
+    document.getElementById('history-empty').style.display = 'none';
+    document.getElementById('history-error').style.display = 'none';
+
+    apiFetch('/api/orders/user')
+      .then(function(data) {
+        var orders = data.orders || [];
+        if (orders.length === 0) {
+          document.getElementById('history-loading').style.display = 'none';
+          document.getElementById('history-empty').style.display = 'block';
+          return;
+        }
+        var pids = orders.map(function(o) { return o.productId; }).filter(function(v,i,a) { return a.indexOf(v) === i; });
+        return Promise.all(pids.map(function(pid) {
+          return fetch('/api/products/' + pid)
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(p) { if (p) productCache[pid] = p; });
+        })).then(function() {
+          renderHistory(orders);
+        });
+      })
+      .catch(function() {
+        document.getElementById('history-loading').style.display = 'none';
+        document.getElementById('history-error').style.display = 'block';
+      });
+  };
+
+  function renderHistory(orders) {
+    document.getElementById('history-loading').style.display = 'none';
+    document.getElementById('history-content').style.display = 'block';
+    var body = document.getElementById('history-body');
+    body.innerHTML = orders.map(function(o) {
+      var p = productCache[o.productId] || {};
+      var status = o.orderStatus || 'PENDING';
+      var badgeClass = status === 'CONFIRMED' ? 'badge-confirmed' : status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending';
+      var date = new Date(o.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      return '<tr>'
+        + '<td style="font-family:monospace; font-size:0.8rem; color: var(--text-dim);">' + o.id.substring(0,8) + '...</td>'
+        + '<td><a href="/products/' + o.productId + '" style="color: var(--white);">' + escapeHtml(p.name || 'Unknown') + '</a></td>'
+        + '<td>' + o.quantity + '</td>'
+        + '<td style="color: var(--cyan); font-weight: 600;">$' + Number(o.totalPrice).toFixed(2) + '</td>'
+        + '<td><span class="badge ' + badgeClass + '">' + status + '</span></td>'
+        + '<td style="color: var(--text-dim);">' + date + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  loadHistory();
+})();
+</script>
+{{> foot}}

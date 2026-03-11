@@ -1,0 +1,136 @@
+{{> head}}
+<div id="product-loading" class="loading-overlay">
+  <div class="spinner"></div>
+  <span>Loading product...</span>
+</div>
+
+<div id="product-error" class="empty-state" style="display: none;">
+  <h2>Product not found</h2>
+  <p style="margin-bottom: 1rem;">This product doesn't exist or has been removed.</p>
+  <a href="/" class="btn btn-outline btn-sm">Back to Home</a>
+</div>
+
+<div id="product-content" style="display: none;">
+  <a href="/" style="font-size: 0.85rem; color: var(--text-dim); display: inline-block; margin-bottom: 1.5rem;">&larr; Back to products</a>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start;">
+    <div class="card">
+      <div style="height: 280px; background: var(--bg); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="var(--border)"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      </div>
+    </div>
+
+    <div>
+      <span id="p-category" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; background: var(--cyan-dim); color: var(--cyan); display: inline-block; margin-bottom: 0.6rem;"></span>
+      <h1 id="p-name" style="font-size: 1.8rem; color: var(--white); margin-bottom: 0.5rem;"></h1>
+      <p id="p-desc" style="color: var(--text-dim); margin-bottom: 1.5rem; line-height: 1.7;"></p>
+
+      <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.5rem;">
+        <span id="p-price" style="font-size: 2rem; font-weight: 700; color: var(--cyan);"></span>
+        <span id="p-stock" style="font-size: 0.9rem;"></span>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;">
+
+      {{#if user}}
+        <div id="action-section">
+          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem;">
+            <label style="margin: 0; white-space: nowrap;">Qty:</label>
+            <div style="display: flex; align-items: center; border: 1px solid var(--border);">
+              <button class="btn btn-sm" onclick="changeQty(-1)" style="border: none; background: var(--surface-hover); color: var(--text); padding: 0.4rem 0.8rem;">&minus;</button>
+              <input type="number" id="qty-input" value="1" min="1" style="width: 50px; text-align: center; border: none; border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
+              <button class="btn btn-sm" onclick="changeQty(1)" style="border: none; background: var(--surface-hover); color: var(--text); padding: 0.4rem 0.8rem;">+</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn btn-outline" id="cart-btn" onclick="addToCart()">Add to Cart</button>
+            <button class="btn btn-primary" id="buy-btn" onclick="buyNow()">Buy Now</button>
+          </div>
+        </div>
+      {{else}}
+        <div class="card" style="background: var(--bg); border-color: var(--cyan); padding: 1rem;">
+          <p style="margin: 0; font-size: 0.9rem; color: var(--text-dim);">
+            <a href="/login">Sign in</a> to add to cart or purchase this product.
+          </p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var productId = {{{json productId}}};
+  var product = null;
+
+  fetch('/api/products/' + productId)
+    .then(function(r) {
+      if (!r.ok) throw new Error('not found');
+      return r.json();
+    })
+    .then(function(data) {
+      product = data;
+      document.getElementById('product-loading').style.display = 'none';
+      document.getElementById('product-content').style.display = 'block';
+      document.getElementById('p-name').textContent = data.name;
+      document.getElementById('p-desc').textContent = data.description || 'No description available.';
+      document.getElementById('p-price').textContent = '$' + Number(data.price).toFixed(2);
+      var stockEl = document.getElementById('p-stock');
+      if (data.stock > 0) {
+        stockEl.textContent = data.stock + ' in stock';
+        stockEl.style.color = 'var(--green)';
+      } else {
+        stockEl.textContent = 'Out of stock';
+        stockEl.style.color = 'var(--red)';
+      }
+      var catEl = document.getElementById('p-category');
+      if (data.category) {
+        catEl.textContent = data.category;
+      } else {
+        catEl.style.display = 'none';
+      }
+    })
+    .catch(function() {
+      document.getElementById('product-loading').style.display = 'none';
+      document.getElementById('product-error').style.display = 'block';
+    });
+
+  window.changeQty = function(d) {
+    var inp = document.getElementById('qty-input');
+    var v = parseInt(inp.value) + d;
+    if (v < 1) v = 1;
+    if (product && v > product.stock) v = product.stock;
+    inp.value = v;
+  };
+
+  window.addToCart = function() {
+    var qty = parseInt(document.getElementById('qty-input').value);
+    var btn = document.getElementById('cart-btn');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    apiFetch('/api/cart', {
+      method: 'POST',
+      body: JSON.stringify({ productId: productId, quantity: qty })
+    }).then(function() {
+      btn.textContent = 'Added!';
+      showToast('Added to cart', 'success');
+      var badge = document.getElementById('cart-count');
+      if (badge) {
+        var c = parseInt(badge.textContent) || 0;
+        badge.textContent = c + 1;
+        badge.style.display = 'flex';
+      }
+      setTimeout(function() { btn.disabled = false; btn.textContent = 'Add to Cart'; }, 1500);
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Add to Cart';
+    });
+  };
+
+  window.buyNow = function() {
+    var qty = parseInt(document.getElementById('qty-input').value);
+    window.location.href = '/checkout?productId=' + productId + '&qty=' + qty;
+  };
+})();
+</script>
+{{> foot}}
