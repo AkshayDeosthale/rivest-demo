@@ -93,8 +93,12 @@
       var price = Number(p.price) || 0;
       var sub = price * item.quantity;
       total += sub;
+      var imgSrc = p.image || 'https://picsum.photos/seed/' + item.productId + '/400/300';
       return '<tr>'
-        + '<td><a href="/products/' + item.productId + '" style="color: var(--white);">' + escapeHtml(p.name || 'Unknown') + '</a></td>'
+        + '<td><a href="/products/' + item.productId + '" style="color: var(--white); display: flex; align-items: center; gap: 0.8rem;">'
+        + '<img src="' + escapeHtml(imgSrc) + '" alt="' + escapeHtml(p.name || '') + '" style="width: 48px; height: 48px; object-fit: cover; flex-shrink: 0; background: var(--bg); border: 1px solid var(--border);" onerror="this.style.display=\'none\'">'
+        + '<span>' + escapeHtml(p.name || 'Unknown') + '</span>'
+        + '</a></td>'
         + '<td>$' + price.toFixed(2) + '</td>'
         + '<td>' + item.quantity + '</td>'
         + '<td style="color: var(--cyan); font-weight: 600;">$' + sub.toFixed(2) + '</td>'

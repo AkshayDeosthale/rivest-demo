@@ -14,9 +14,10 @@
   <a href="/" style="font-size: 0.85rem; color: var(--text-dim); display: inline-block; margin-bottom: 1.5rem;">&larr; Back to products</a>
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start;">
-    <div class="card">
-      <div style="height: 280px; background: var(--bg); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="var(--border)"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div id="p-image-wrap" style="height: 360px; background: var(--bg); display: flex; align-items: center; justify-content: center;">
+        <svg id="p-image-fallback" width="80" height="80" viewBox="0 0 24 24" fill="var(--border)"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        <img id="p-image" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Product image">
       </div>
     </div>
 
@@ -83,6 +84,12 @@
         stockEl.textContent = 'Out of stock';
         stockEl.style.color = 'var(--red)';
       }
+      var imgSrc = data.image || 'https://picsum.photos/seed/' + productId + '/400/300';
+      var imgEl = document.getElementById('p-image');
+      var fallbackEl = document.getElementById('p-image-fallback');
+      imgEl.onload = function() { fallbackEl.style.display = 'none'; imgEl.style.display = 'block'; };
+      imgEl.src = imgSrc;
+
       var catEl = document.getElementById('p-category');
       if (data.category) {
         catEl.textContent = data.category;

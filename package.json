@@ -5,7 +5,8 @@
   "private": true,
   "license": "UNLICENSED",
   "prisma": {
-    "schema": "libs/prisma/prisma/schema.prisma"
+    "schema": "libs/prisma/prisma/schema.prisma",
+    "seed": "npx ts-node libs/prisma/prisma/seed.ts"
   },
   "overrides": {
     "tar": "^7.4.0",

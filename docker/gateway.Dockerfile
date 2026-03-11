@@ -25,4 +25,4 @@ COPY --from=builder /app/apps/gateway/views ./apps/gateway/views
 WORKDIR /app
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=libs/prisma/prisma/schema.prisma && node dist/apps/gateway/apps/gateway/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=libs/prisma/prisma/schema.prisma && node dist/apps/gateway/libs/prisma/prisma/seed.js && node dist/apps/gateway/apps/gateway/src/main.js"]

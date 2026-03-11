@@ -41,11 +41,11 @@ flowchart TB
 
 ## Microservices Overview
 
-| Service | Port(s) | Responsibilities |
-|---------|---------|------------------|
-| **Gateway** | 3000 | User authentication, MVC UI rendering, dynamic form rendering, proxying requests to microservices, validation, rate limiting, session management |
-| **Product Service** | 3001 (HTTP), 50051 (gRPC) | Product CRUD, inventory validation, stock management |
-| **Order Service** | 3002 (HTTP), 50052 (gRPC) | Order creation, order management, product validation via Product Service |
+| Service             | Port(s)                   | Responsibilities                                                                                                                                 |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Gateway**         | 3000                      | User authentication, MVC UI rendering, dynamic form rendering, proxying requests to microservices, validation, rate limiting, session management |
+| **Product Service** | 3001 (HTTP), 50051 (gRPC) | Product CRUD, inventory validation, stock management                                                                                             |
+| **Order Service**   | 3002 (HTTP), 50052 (gRPC) | Order creation, order management, product validation via Product Service                                                                         |
 
 ## Why Inter-Service Communication?
 
@@ -58,6 +58,7 @@ The system uses **gRPC** for communication between the Gateway and microservices
 - **Native NestJS support** – First-class `@nestjs/microservices` integration
 
 When an order is created:
+
 1. Order Service receives the request
 2. Order Service calls Product Service via gRPC to validate product and check stock
 3. Product Service returns availability and price
@@ -88,8 +89,6 @@ When an order is created:
 # Start all services (PostgreSQL, Gateway, Product Service, Order Service)
 docker compose up --build
 
-# In another terminal, run database migrations
-docker compose exec gateway npx prisma migrate deploy --schema=libs/prisma/prisma/schema.prisma
 ```
 
 - **Gateway UI:** http://localhost:3000
@@ -99,12 +98,14 @@ docker compose exec gateway npx prisma migrate deploy --schema=libs/prisma/prism
 ### Run Locally
 
 1. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 2. **Environment setup**
    Create `.env` in the project root:
+
    ```env
    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/microservice_db"
    JWT_SECRET="your-secret-key-change-in-production"
@@ -113,12 +114,14 @@ docker compose exec gateway npx prisma migrate deploy --schema=libs/prisma/prism
    ```
 
 3. **Database**
+
    ```bash
    # Ensure PostgreSQL is running, then:
    npm run prisma:migrate
    ```
 
 4. **Start services** (use 3 terminals)
+
    ```bash
    # Terminal 1 - Product Service
    npm run start:product:dev
@@ -131,6 +134,7 @@ docker compose exec gateway npx prisma migrate deploy --schema=libs/prisma/prism
    ```
 
    Or run all together:
+
    ```bash
    npm run start:dev
    ```
@@ -165,6 +169,7 @@ rivest-demo/
 ## API Endpoints
 
 ### Auth (Gateway)
+
 - `POST /auth/signup` – Register (JSON)
 - `POST /auth/login` – Login (JSON)
 - `POST /auth/signup-form` – Signup form submit (redirect)
@@ -172,6 +177,7 @@ rivest-demo/
 - `GET /auth/profile` – Get profile (JWT required)
 
 ### Products (Gateway, JWT required)
+
 - `POST /products` – Create product
 - `GET /products` – List products (query: `?page=1&limit=10`)
 - `GET /products/:id` – Get product
@@ -179,37 +185,39 @@ rivest-demo/
 - `DELETE /products/:id` – Delete product
 
 ### Orders (Gateway, JWT required)
+
 - `POST /orders` – Create order (`productId`, `quantity`)
 - `GET /orders` – List orders (query: `?page=1&limit=10`)
 - `GET /orders/:id` – Get order
 
 ### MVC Pages
+
 - `GET /` – Home
 - `GET /signup` – Signup form (dynamic from JSON config)
 - `GET /login` – Login form
 
 ## Environment Variables
 
-| Variable | Description |
-|---------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret for JWT signing |
-| `PRODUCT_GRPC_URL` | Product service gRPC address |
-| `ORDER_GRPC_URL` | Order service gRPC address |
-| `PORT` | Gateway HTTP port (default: 3000) |
+| Variable           | Description                       |
+| ------------------ | --------------------------------- |
+| `DATABASE_URL`     | PostgreSQL connection string      |
+| `JWT_SECRET`       | Secret for JWT signing            |
+| `PRODUCT_GRPC_URL` | Product service gRPC address      |
+| `ORDER_GRPC_URL`   | Order service gRPC address        |
+| `PORT`             | Gateway HTTP port (default: 3000) |
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run start:gateway:dev` | Start gateway in watch mode |
+| Command                     | Description                         |
+| --------------------------- | ----------------------------------- |
+| `npm run start:gateway:dev` | Start gateway in watch mode         |
 | `npm run start:product:dev` | Start product service in watch mode |
-| `npm run start:order:dev` | Start order service in watch mode |
-| `npm run start:dev` | Start all services concurrently |
-| `npm run build` | Build all apps |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run prisma:migrate` | Run migrations |
-| `npm run lint` | Run ESLint |
+| `npm run start:order:dev`   | Start order service in watch mode   |
+| `npm run start:dev`         | Start all services concurrently     |
+| `npm run build`             | Build all apps                      |
+| `npm run prisma:generate`   | Generate Prisma client              |
+| `npm run prisma:migrate`    | Run migrations                      |
+| `npm run lint`              | Run ESLint                          |
 
 ## License
 

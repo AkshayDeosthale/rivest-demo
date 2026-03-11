@@ -16,6 +16,7 @@ export interface CreateProductRequest {
   price: number;
   stock: number;
   category?: string;
+  image?: string;
 }
 
 export interface UpdateProductRequest {
@@ -25,6 +26,7 @@ export interface UpdateProductRequest {
   price?: number;
   stock?: number;
   category?: string;
+  image?: string;
 }
 
 export interface DeleteProductRequest {

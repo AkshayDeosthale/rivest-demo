@@ -72,7 +72,7 @@
             products.forEach(function(p) { pMap[p.id] = p; });
             checkoutItems = items.map(function(item) {
               var pr = pMap[item.productId] || {};
-              return { productId: item.productId, name: pr.name || 'Unknown', price: Number(pr.price) || 0, quantity: item.quantity, cartId: item.id };
+              return { productId: item.productId, name: pr.name || 'Unknown', price: Number(pr.price) || 0, quantity: item.quantity, cartId: item.id, image: pr.image || '' };
             });
             renderInvoice();
           });
@@ -84,7 +84,7 @@
       fetch('/api/products/' + singleProductId)
         .then(function(r) { return r.json(); })
         .then(function(p) {
-          checkoutItems = [{ productId: p.id, name: p.name, price: Number(p.price), quantity: singleQty }];
+          checkoutItems = [{ productId: p.id, name: p.name, price: Number(p.price), quantity: singleQty, image: p.image || '' }];
           renderInvoice();
         })
         .catch(function() {
@@ -103,8 +103,11 @@
     body.innerHTML = checkoutItems.map(function(item) {
       var sub = item.price * item.quantity;
       total += sub;
+      var imgSrc = item.image || 'https://picsum.photos/seed/' + item.productId + '/400/300';
       return '<tr>'
-        + '<td style="color: var(--white);">' + escapeHtml(item.name) + '</td>'
+        + '<td style="color: var(--white);"><div style="display: flex; align-items: center; gap: 0.8rem;">'
+        + '<img src="' + escapeHtml(imgSrc) + '" alt="' + escapeHtml(item.name) + '" style="width: 40px; height: 40px; object-fit: cover; flex-shrink: 0; background: var(--bg); border: 1px solid var(--border);" onerror="this.style.display=\'none\'">'
+        + '<span>' + escapeHtml(item.name) + '</span></div></td>'
         + '<td>$' + item.price.toFixed(2) + '</td>'
         + '<td>' + item.quantity + '</td>'
         + '<td style="color: var(--cyan); font-weight: 600;">$' + sub.toFixed(2) + '</td>'

@@ -29,6 +29,7 @@ message CreateProductRequest {
   double price = 3;
   int32 stock = 4;
   string category = 5;
+  string image = 6;
 }
 
 message UpdateProductRequest {
@@ -38,6 +39,7 @@ message UpdateProductRequest {
   double price = 4;
   int32 stock = 5;
   string category = 6;
+  string image = 7;
 }
 
 message DeleteProductRequest {
@@ -71,6 +73,7 @@ message Product {
   string category = 6;
   string createdAt = 7;
   string updatedAt = 8;
+  string image = 9;
 }
 
 message ProductList {

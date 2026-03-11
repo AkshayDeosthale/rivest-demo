@@ -8,6 +8,17 @@
 
     <div id="form-error" style="display:none; padding: 0.6rem 0.8rem; border: 1px solid var(--red); color: var(--red); font-size: 0.85rem; margin-bottom: 1rem;"></div>
 
+    <div class="form-group">
+      <label>Product Image</label>
+      <div style="position: relative; width: 100%; height: 260px; background: var(--bg); border: 1px solid var(--border); overflow: hidden;">
+        <img id="preview-img" style="width: 100%; height: 100%; object-fit: cover; display: block;" alt="Product preview">
+        <button type="button" id="refresh-img-btn" onclick="refreshImage()" style="position: absolute; bottom: 0.6rem; right: 0.6rem; background: var(--surface); border: 1px solid var(--border); color: var(--cyan); padding: 0.4rem 0.7rem; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem; transition: all 0.3s ease;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          New Image
+        </button>
+      </div>
+    </div>
+
     <form id="create-form">
       <div class="form-group">
         <label for="name">Product Name <span style="color: var(--red);">*</span></label>
@@ -38,6 +49,29 @@
 
 <script>
 (function() {
+  var currentImageSeed = Math.floor(Math.random() * 100000);
+  var previewImg = document.getElementById('preview-img');
+
+  function getImageUrl(seed) {
+    return 'https://picsum.photos/seed/' + seed + '/400/300';
+  }
+
+  previewImg.src = getImageUrl(currentImageSeed);
+
+  window.refreshImage = function() {
+    currentImageSeed = Math.floor(Math.random() * 100000);
+    previewImg.style.opacity = '0.5';
+    var newImg = new Image();
+    newImg.onload = function() {
+      previewImg.src = newImg.src;
+      previewImg.style.opacity = '1';
+    };
+    newImg.onerror = function() {
+      previewImg.style.opacity = '1';
+    };
+    newImg.src = getImageUrl(currentImageSeed);
+  };
+
   document.getElementById('create-form').addEventListener('submit', function(e) {
     e.preventDefault();
     var btn = document.getElementById('create-btn');
@@ -50,6 +84,7 @@
       name: document.getElementById('name').value.trim(),
       price: parseFloat(document.getElementById('price').value),
       stock: parseInt(document.getElementById('stock').value),
+      image: getImageUrl(currentImageSeed),
     };
     var desc = document.getElementById('description').value.trim();
     var cat = document.getElementById('category').value.trim();

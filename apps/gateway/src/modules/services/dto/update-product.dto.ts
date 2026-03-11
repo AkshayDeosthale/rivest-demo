@@ -22,4 +22,8 @@ export class UpdateProductDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsString()
+  @IsOptional()
+  image?: string;
 }

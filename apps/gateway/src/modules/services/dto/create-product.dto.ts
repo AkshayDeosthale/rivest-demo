@@ -26,4 +26,8 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @IsString()
+  @IsOptional()
+  image?: string;
 }

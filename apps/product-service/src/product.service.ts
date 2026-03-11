@@ -14,6 +14,7 @@ export class ProductService {
     price: Decimal;
     stock: number;
     category: string | null;
+    image: string | null;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -24,6 +25,7 @@ export class ProductService {
       price: Number(product.price),
       stock: product.stock,
       category: product.category || '',
+      image: product.image || '',
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
     };
@@ -84,6 +86,7 @@ export class ProductService {
     price: number;
     stock: number;
     category?: string;
+    image?: string;
   }) {
     if (data.price <= 0) {
       throw new RpcException({
@@ -105,6 +108,7 @@ export class ProductService {
           price: data.price,
           stock: data.stock,
           category: data.category,
+          image: data.image,
         },
       });
       return this.toGrpcProduct(product);
@@ -128,6 +132,7 @@ export class ProductService {
     price?: number;
     stock?: number;
     category?: string;
+    image?: string;
   }) {
     if (data.price !== undefined && data.price <= 0) {
       throw new RpcException({
@@ -161,6 +166,7 @@ export class ProductService {
           ...(data.price !== undefined && { price: data.price }),
           ...(data.stock !== undefined && { stock: data.stock }),
           ...(data.category !== undefined && { category: data.category }),
+          ...(data.image !== undefined && { image: data.image }),
         },
       });
       return this.toGrpcProduct(updated);
